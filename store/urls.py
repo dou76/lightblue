@@ -24,4 +24,5 @@ urlpatterns = [
     path("reply/", views.reply_view),
     path("question_list/", views.question_list_view),
     path("update_question_state/", views.update_question_view),
+    path("add_star", views.add_star_view)
 ]

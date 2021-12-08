@@ -1,9 +1,13 @@
 import json
 from .import models
 
-# 检查注册用户名是否重复
-def check_username(username):
 
+# 检查注册用户名是否重复
+def check_legal_username(username):
+    return (username != None and isinstance(username, str) and len(username) <= 12 and len(username) >= 5)
+
+# 检查注册用户名是否重复
+def check_multiple_username(username):
     if(models.User.objects.filter(username = username).exists()):
         return False
     
@@ -19,8 +23,20 @@ def check_code(code):
 
 # 检查密码合法性
 def check_password(password):
-    pass
-    return True
+    if (password == None or not isinstance(password, str) or len(password) > 18 or len(password) < 6):
+        return False
+
+    lower, digit = False, False
+    for letter in password:
+        if letter.islower():
+            lower = True
+        elif letter.isdigit():
+            digit = True
+        
+        if(lower and digit):
+            return True
+    
+    return False
 
 # 用户登录检验
 def login_check(username, password):

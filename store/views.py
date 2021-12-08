@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.forms.models import model_to_dict
 
 import json
+import datetime
 from . import util
 from . import models
 
@@ -17,11 +18,12 @@ def register_view(request):
         
         返回参数: ans
         ans.msg：消息
-            1. method error: 表单提交类型错误;
+            1. method error: 表单提交类型错误
             2. code error: 校验码错误
-            3. multiple user: 用户名重复;
-            4. success: 成功
-            (关于密码的功能 可以后期添加)
+            3. illegal user: 非法用户名
+            3. multiple user: 用户名重复
+            4. password error: 密码不符合规范
+            5. success: 成功
 
         ans.id: 用户id(数据库中主键)
     """
@@ -39,10 +41,12 @@ def register_view(request):
         type = request_dict.get("type")
 
         if(not util.check_code(code)):
+            ret_dict["msg"] = "code error"
+        elif(not util.check_legal_username(username)):
+            ret_dict["msg"] = "illegal user"
+        elif(not util.check_multiple_username(username)):
             ret_dict["msg"] = "multiple user"
-        if(not util.check_username(username)):
-            ret_dict["msg"] = "multiple user"
-        if(not util.check_password(password)):
+        elif(not util.check_password(password)):
             ret_dict["msg"] = "password error"
 
         new_user = models.User.objects.create(username = username, password = password, name = name,
@@ -205,9 +209,12 @@ def question_list_view(request):
             1. student
             2. teacher
             3. question_type
+            4. date
             ...
         request.id: 对应查询对象的id(如果是查询老师/学生的问题)
         request.quetion_type: 筛选问题的类别
+        request.start_date:(xxxx(y)-xx(m)-xx(d)): 查询起始时间
+        request.end_date:(xxxx(y)-xx(m)-xx(d)): 查询截止时间
         返回参数: ans
         ans.msg：消息
             1. success: 成功
@@ -231,11 +238,20 @@ def question_list_view(request):
             question_type = request_dict.get("question_type")
             question_list = models.Question.objects.filter(type = question_type, state = "unsolved").order_by("-id")
         elif(type == "student"):
-            question_id = request_dict.get("id")
-            question_list = models.Question.objects.filter(questioner_id = question_id).order_by("-id")
+            questioner_id = request_dict.get("id")
+            question_list = models.Question.objects.filter(questioner_id = questioner_id).order_by("-id")
         elif(type == "teacher"):
-            question_id = request_dict.get("id")
-            question_list = models.Question.objects.filter(answerer_id = question_id).order_by("-id")
+            answerer_id = request_dict.get("id")
+            question_list = models.Question.objects.filter(answerer_id = answerer_id).order_by("-id")
+        elif(type == "date"):
+            start_year, start_month, start_day = util.parse_date(request_dict.get("start_date"))
+            end_year, end_month, end_day = util.parse_date(request_dict.get("end_date"))
+            start_time = datetime.datetime(year = start_year, month = start_month, day = start_day,
+                hour = 0, minute = 0, second = 0)
+            end_time = datetime.datetime(year = end_year, month = end_month, day = end_day,
+                hour = 23, minute = 59, second = 59)
+            question_list = models.Question.objects.filter(question_time__range = (start_time, end_time)).order_by("id")
+
         ret_dict = {}
         ret_dict["msg"] = "success"
         ret_dict["question_list"] = [model_to_dict(question) for question in question_list]
@@ -265,6 +281,7 @@ def update_question_view(request):
 
         学生会结单；教师会将问题改为解答中
     """
+
     if request.method == "GET":
         request_dict = json.loads(request.body)
         type = request_dict.get("type")
@@ -286,6 +303,43 @@ def update_question_view(request):
         else:
             ret_dict["msg"] = "type error"
     
+    else:
+        ret_dict = {}
+        ret_dict["msg"] = "method error"
+
+    ans = json.dumps(ret_dict)
+    return HttpResponse(ans, content_type = "application/json")
+
+# 管理员加精
+def update_question_view(request):
+    """ 
+        接受参数：request
+        request.user_id: 加精管理员id
+        request.question_id_list: 待加精问题列表
+        返回参数: ans
+        ans.msg：消息
+            1. success: 成功
+            2. method error: 请求类型错误
+            3. power limit: 无权限加精
+    """
+
+    if request.method == "GET":
+        request_dict = json.loads(request.body)
+        type = request_dict.get("type")
+        user_id = request_dict.get("user_id")
+        question_id_list = request_dict.get("question_id_list")
+        user = models.User.objects.filter(id = user_id).first()
+
+        ret_dict = {}
+        ret_dict["msg"] = "success"
+
+        if(not user.type == "admin"):
+            ret_dict["msg"] = "power limit"
+
+        question_list = models.Question.objects.filter(id__in = question_id_list)
+        for question in question_list:
+            question.is_star = True
+            question.save()
     else:
         ret_dict = {}
         ret_dict["msg"] = "method error"

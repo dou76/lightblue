@@ -2,7 +2,7 @@ from django.db import models
 
 class User(models.Model):
     name = models.CharField("姓名", max_length = 20, default = "")
-    user_type = models.CharField("用户类型", max_length = 5, default="")
+    user_type = models.CharField("用户类型", max_length = 10, default="")
     username = models.CharField("用户名", max_length = 14, default = "")
     password = models.CharField("密码", max_length = 25, default = "")
     school = models.CharField("学校", max_length=13, default="")
@@ -20,10 +20,11 @@ class Question(models.Model):
     abstract = models.CharField("问题摘要", max_length = 20, default = "")
     state = models.CharField("问题状态", max_length = 10, default = "unsolved")
     questioner_id = models.ForeignKey("User", db_column='questioner_id',
-    related_name = "questioner_id", on_delete = models.SET_DEFAULT, default = 1)
+        related_name = "questioner_id", on_delete = models.SET_DEFAULT, default = 1)
     answerer_id = models.ForeignKey("User", db_column='answerer_id',
-     related_name = "answerer_id", on_delete = models.SET_DEFAULT, default = 1)
+        related_name = "answerer_id", on_delete = models.SET_DEFAULT, default = 1)
     question_time = models.DateTimeField("提问时间",auto_now_add = True)
+    is_star = models.BooleanField("是否加精", default = False)
 
 class Reply(models.Model):
     type = models.CharField("回复类型", max_length = 10, default = "")
