@@ -2,11 +2,11 @@ from django.db import models
 
 class User(models.Model):
     name = models.CharField("姓名", max_length = 20, default = "")
-    user_type = models.CharField("用户类型", max_length = 10, default="")
+    user_type = models.CharField("用户类型", max_length = 12, default="")
     username = models.CharField("用户名", max_length = 14, default = "")
     password = models.CharField("密码", max_length = 25, default = "")
     school = models.CharField("学校", max_length=13, default="")
-    _class = models.CharField("班级", max_length=10, default="")
+    _class = models.CharField("班级", max_length=12, default="")
 
     # register_time = models.DateField()
 
@@ -17,7 +17,7 @@ class Authentication(models.Model):
 class Question(models.Model):
     type = models.CharField("问题类型", max_length = 10, default = "")
     title = models.CharField("问题名称", max_length = 10, default = "")
-    abstract = models.CharField("问题摘要", max_length = 20, default = "")
+    abstract = models.CharField("问题摘要", max_length = 50, default = "")
     state = models.CharField("问题状态", max_length = 10, default = "unsolved")
     questioner_id = models.ForeignKey("User", db_column='questioner_id',
         related_name = "questioner_id", on_delete = models.SET_DEFAULT, default = 1)

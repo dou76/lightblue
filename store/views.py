@@ -6,6 +6,41 @@ import datetime
 from . import util
 from . import models
 
+# 检查用户名和密码
+def register_pre_check_view(request):
+    """
+        接受参数：request
+        request.username: 用户名
+        request.password: 密码        
+        
+        返回参数: ans
+        ans.msg：消息
+            1. method error: 表单提交类型错误
+            3. illegal user: 非法用户名
+            3. multiple user: 用户名重复
+            4. password error: 密码不符合规范
+            5. success: 成功
+    """
+    ret_dict = {"msg": "success"}
+
+    if request.method == "POST":
+        request_dict = json.loads(request.body)
+        username = request_dict.get("username")
+        password = request_dict.get("password")
+
+        if(not util.check_legal_username(username)):
+            ret_dict["msg"] = "illegal user"
+        elif(not util.check_multiple_username(username)):
+            ret_dict["msg"] = "multiple user"
+        elif(not util.check_password(password)):
+            ret_dict["msg"] = "password error"
+
+    else:
+        ret_dict["msg"] = "method error"
+
+    ans = json.dumps(ret_dict)
+    return HttpResponse(ans, content_type = "application/json")
+
 # 用户注册
 def register_view(request):
     """
@@ -76,7 +111,6 @@ def login_view(request):
         ans.id: 用户id(数据库中主键)
         ans.type: 用户类型(student, teacher, admin)
     """
-
     if request.method == "POST":
         request_dict = json.loads(request.body)
         username = request_dict.get("username")
@@ -84,7 +118,6 @@ def login_view(request):
         ans = util.login_check(username, password)
     else:
         ans = json.dumps({"msg": "method error"})
-    
     return HttpResponse(ans, content_type = "application/json")
 
 # 创建问题(post) / 获取问题信息(get)
@@ -311,7 +344,7 @@ def update_question_view(request):
     return HttpResponse(ans, content_type = "application/json")
 
 # 管理员加精
-def update_question_view(request):
+def add_star_view(request):
     """ 
         接受参数：request
         request.user_id: 加精管理员id
@@ -346,3 +379,17 @@ def update_question_view(request):
 
     ans = json.dumps(ret_dict)
     return HttpResponse(ans, content_type = "application/json")
+
+def modify_info_view(request):
+    """ 
+        接受参数：request
+        request.user_id: 加精管理员id
+        request.question_id_list: 待加精问题列表
+        返回参数: ans
+        ans.msg：消息
+            1. success: 成功
+            2. method error: 请求类型错误
+            3. power limit: 无权限加精
+    """
+
+    
