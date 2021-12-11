@@ -37,8 +37,8 @@ def register_pre_check_view(request):
 
     else:
         ret_dict["msg"] = "method error"
-
     ans = json.dumps(ret_dict)
+    print(ret_dict)
     return HttpResponse(ans, content_type = "application/json")
 
 # 用户注册
@@ -49,7 +49,9 @@ def register_view(request):
         request.password: 密码
         request.code: 校验码
         request.type: 用户类型
-        
+        request.name: 姓名
+        request.school: 学校
+        request.class: 班级
         
         返回参数: ans
         ans.msg：消息
@@ -83,15 +85,13 @@ def register_view(request):
             ret_dict["msg"] = "multiple user"
         elif(not util.check_password(password)):
             ret_dict["msg"] = "password error"
-
-        new_user = models.User.objects.create(username = username, password = password, name = name,
-            school = school, _class = _class, user_type = type)
-        new_user.save()
-        ret_dict["id"] = new_user.id
-        
+        else:
+            new_user = models.User.objects.create(username = username, password = password, name = name,
+                school = school, _class = _class, user_type = type)
+            new_user.save()
+            ret_dict["id"] = new_user.id
     else:
         ret_dict["msg"] = "method error"
-
     ans = json.dumps(ret_dict)
     return HttpResponse(ans, content_type = "application/json")
     
@@ -265,20 +265,19 @@ def question_list_view(request):
         question.question_time: 回复者id
     """
     if request.method == "GET":
-        request_dict = json.loads(request.body)
-        type = request_dict.get("type")
+        question_list = []
         if(type == "type"):
-            question_type = request_dict.get("question_type")
+            question_type = request.GET.get("question_type")
             question_list = models.Question.objects.filter(type = question_type, state = "unsolved").order_by("-id")
         elif(type == "student"):
-            questioner_id = request_dict.get("id")
+            questioner_id = request.GET.get("id")
             question_list = models.Question.objects.filter(questioner_id = questioner_id).order_by("-id")
         elif(type == "teacher"):
-            answerer_id = request_dict.get("id")
+            answerer_id = request.GET.get("id")
             question_list = models.Question.objects.filter(answerer_id = answerer_id).order_by("-id")
         elif(type == "date"):
-            start_year, start_month, start_day = util.parse_date(request_dict.get("start_date"))
-            end_year, end_month, end_day = util.parse_date(request_dict.get("end_date"))
+            start_year, start_month, start_day = util.parse_date(request.GET.get("start_date"))
+            end_year, end_month, end_day = util.parse_date(request.GET.get("end_date"))
             start_time = datetime.datetime(year = start_year, month = start_month, day = start_day,
                 hour = 0, minute = 0, second = 0)
             end_time = datetime.datetime(year = end_year, month = end_month, day = end_day,
