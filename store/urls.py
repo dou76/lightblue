@@ -16,15 +16,17 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from . import views
+from .views import admin_views, question_views, reply_views, user_views
+
 urlpatterns = [
-    path("login/", views.login_view),
-    path("register_pre_check/", views.register_pre_check_view),
-    path("register/", views.register_view),
-    path("question/", views.question_view),
-    path("reply/", views.reply_view),
-    path("question_list/", views.question_list_view),
-    path("update_question_state/", views.update_question_view),
-    path("add_star", views.add_star_view),
-    path("modify_info", views.modify_info_view),
+    path("register_pre_check/", user_views.register_pre_check_view),
+    path("register/", user_views.register_view),
+    path("login/", user_views.login_view),
+    path("question/", question_views.question_view),
+    path("question_list/", question_views.question_list_view),
+    path("update_question_state/", question_views.update_question_view),
+    path("reply/", reply_views.reply_view),
+    path("add_star/", admin_views.add_star_view),
+    path("modify_info/", user_views.modify_info_view),
+    path("get_info/", user_views.get_info_view),
 ]

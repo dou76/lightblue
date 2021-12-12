@@ -29,7 +29,7 @@ class Question(models.Model):
 class Reply(models.Model):
     type = models.CharField("回复类型", max_length = 10, default = "")
     content = models.CharField("回复内容", max_length = 20, default = "")
-    #imgage = models.ImageField("回复图片")
+    imgage = models.ImageField("回复图片", default = "")
     poster_id = models.ForeignKey("User", db_column='poster_id', on_delete = models.SET_DEFAULT, default = 1)
     question_id = models.ForeignKey("Question", db_column='question_id', on_delete = models.SET_DEFAULT, default = 1)
     reply_time = models.DateTimeField("回复时间",auto_now_add = True)
