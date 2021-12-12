@@ -7,8 +7,7 @@ class User(models.Model):
     password = models.CharField("密码", max_length = 25, default = "")
     school = models.CharField("学校", max_length=13, default="")
     _class = models.CharField("班级", max_length=12, default="")
-
-    # register_time = models.DateField()
+    # register_time = models.DateField("注册时间", auto_now_add = True)
 
 
 class Authentication(models.Model):
@@ -23,7 +22,7 @@ class Question(models.Model):
         related_name = "questioner_id", on_delete = models.SET_DEFAULT, default = 1)
     answerer_id = models.ForeignKey("User", db_column='answerer_id',
         related_name = "answerer_id", on_delete = models.SET_DEFAULT, default = 1)
-    question_time = models.DateTimeField("提问时间",auto_now_add = True)
+    question_time = models.DateTimeField("提问时间", auto_now_add = True)
     is_star = models.BooleanField("是否加精", default = False)
 
 class Reply(models.Model):

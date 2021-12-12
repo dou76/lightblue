@@ -16,7 +16,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from .views import admin_views, question_views, reply_views, user_views
+from .views import (admin_views, question_views, reply_views, user_views)
 
 urlpatterns = [
     path("register_pre_check/", user_views.register_pre_check_view),

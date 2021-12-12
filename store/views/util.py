@@ -55,3 +55,8 @@ def login_check(username, password):
         ret_dict["type"] = user.user_type
 
     return json.dumps(ret_dict)
+
+# 解析日期
+def parse_date(date):
+    date_list = date.split("-")
+    return int(date_list[0]), int(date_list[1]), int(date_list[2])

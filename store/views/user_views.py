@@ -192,13 +192,55 @@ def modify_info_view(request):
             user = user.first()
             if(not util.check_multiple_username(username) and not user.id == id):
                 ret_dict['msg'] = "multiple user"
-            if(not util.check_legal_username(username)):
+            elif(not util.check_legal_username(username)):
                 ret_dict['msg'] = "illegal user"
             else:
                 user.username = username
                 user.name = name
                 user.school = school
                 user._class = _class
+                user.save()
+    else:
+        ret_dict["msg"] = "method error"
+
+    ans = json.dumps(ret_dict)
+    return HttpResponse(ans, content_type = "application/json")
+
+# 修改密码
+def change_password(request):
+    """
+        接受参数：request
+        request.id: 用户id
+        request.old_password: 旧密码
+        request.new_password: 新密码
+
+        返回参数: ans
+        ans.msg：消息
+            1. method error: 表单提交类型错误;
+            2. not found: 查找用户失败
+            3. wrong password: 旧密码错误
+            5. illegal password: 新密码不合规范
+            6. success: 成功
+    """
+
+    ret_dict = {"msg": "success"}
+    if request.method == "POST":
+        request_dict = json.loads(request.body)
+        id = request_dict.get("id")
+        old_password = request_dict.get("old_password")
+        new_password = request_dict.get("new_password")
+
+        user = models.User.objects.filter(id = id)
+        if(not user.exists()):
+            ret_dict["msg"] = "not found"
+        else:
+            user = user.first()
+            if(not old_password == user.password):
+                ret_dict['msg'] = "wrong password"
+            elif(not util.check_password(new_password)):
+                ret_dict['msg'] = "illegal password"
+            else:
+                user.password = new_password
                 user.save()
     else:
         ret_dict["msg"] = "method error"

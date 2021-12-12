@@ -62,8 +62,7 @@ def question_view(request):
         return HttpResponse(ans, content_type = "application/json")
 
     elif request.method == "GET":
-        request_dict = json.loads(request.body)
-        question_id = request_dict.get("id")
+        question_id = request.GET.get("id")
         reply_list = models.Reply.objects.filter(question_id = question_id).order_by("id")
 
         ret_dict = {}
@@ -86,7 +85,7 @@ def question_list_view(request):
             4. date
             ...
         request.id: 对应查询对象的id(如果是查询老师/学生的问题)
-        request.quetion_type: 筛选问题的类别
+        request.question_type: 筛选问题的类别
         request.start_date:(xxxx(y)-xx(m)-xx(d)): 查询起始时间
         request.end_date:(xxxx(y)-xx(m)-xx(d)): 查询截止时间
         返回参数: ans
@@ -107,6 +106,7 @@ def question_list_view(request):
     """
     if request.method == "GET":
         question_list = []
+        type = request.GET.get("type")
         if(type == "type"):
             question_type = request.GET.get("question_type")
             question_list = models.Question.objects.filter(type = question_type, state = "unsolved").order_by("-id")
