@@ -23,18 +23,18 @@ def reply_view(request):
 
     if request.method == "POST":
         request_dict = json.loads(request.body)
-        type = request_dict.get("type")
+        _type = request_dict.get("type")
         poster_id = request_dict.get("poster_id")
         poster = models.User.objects.filter(id = poster_id).first()
         question_id = request_dict.get("question_id")
         question = models.Question.objects.filter(id = question_id).first()
 
-        if(type == "text"):
+        if(_type == "text"):
             content = request_dict.get("content")
-            new_reply = models.Reply.objects.create(type = type, content = content)
+            new_reply = models.Reply.objects.create(type = _type, content = content)
         else:
             image = request_dict.get("image")
-            new_reply = models.Reply.objects.create(type = type, image = image)
+            new_reply = models.Reply.objects.create(type = _type, image = image)
 
         new_reply.poster_id = poster
         new_reply.question_id = question

@@ -19,7 +19,6 @@ def add_star_view(request):
 
     if request.method == "GET":
         request_dict = json.loads(request.body)
-        type = request_dict.get("type")
         user_id = request_dict.get("user_id")
         question_id_list = request_dict.get("question_id_list")
         user = models.User.objects.filter(id = user_id).first()

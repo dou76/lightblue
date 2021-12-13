@@ -73,7 +73,7 @@ def register_view(request):
         name = request_dict.get("name")
         school = request_dict.get("school")
         _class = request_dict.get("class")
-        type = request_dict.get("type")
+        _type = request_dict.get("type")
 
         if(not util.check_code(code)):
             ret_dict["msg"] = "code error"
@@ -85,7 +85,7 @@ def register_view(request):
             ret_dict["msg"] = "password error"
         else:
             new_user = models.User.objects.create(username = username, password = password, name = name,
-                school = school, _class = _class, user_type = type)
+                school = school, _class = _class, user_type = _type)
             new_user.save()
             ret_dict["id"] = new_user.id
     else:

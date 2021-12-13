@@ -3,7 +3,7 @@ import datetime
 
 from django.http import HttpResponse
 from django.forms.models import model_to_dict
-
+from django.db.models import Q
 from . import util
 from .. import models
 
@@ -42,14 +42,14 @@ def question_view(request):
 
     if request.method == "POST":
         request_dict = json.loads(request.body)
-        type = request_dict.get("type")
+        _type = request_dict.get("type")
         title = request_dict.get("title")
         abstract = request_dict.get("abstract")
         state = "待解决"
 
         questioner_id = request_dict.get("questioner_id")
         questioner = models.User.objects.filter(id = questioner_id).first()
-        new_question = models.Question.objects.create(type = type, title = title, abstract = abstract,
+        new_question = models.Question.objects.create(type = _type, title = title, abstract = abstract,
             state = state)
         new_question.questioner = questioner
         new_question.save()
@@ -78,20 +78,25 @@ def question_view(request):
 def question_list_view(request):
     """ 
         接受参数：request
-        request.type: 查询问题方式
-            1. student
-            2. teacher
-            3. question_type
-            4. date
+        request.type_list: 筛选问题的条件列表
+        可加入元素有：
+            1. student：        学生id
+            2. teacher：        教师id
+            3. question_type：  问题类型
+            4. date：           起止日期
+            5. is_star：         是否加精
             ...
-        request.id: 对应查询对象的id(如果是查询老师/学生的问题)
-        request.question_type: 筛选问题的类别
+        request.student_id_list:    查看的学生id列表
+        request.teacher_id_list:    查看的教师id列表
+        request.question_type_list: 问题类别列表
         request.start_date:(xxxx(y)-xx(m)-xx(d)): 查询起始时间
         request.end_date:(xxxx(y)-xx(m)-xx(d)): 查询截止时间
+        request.is_star:    是否只查看加精
         返回参数: ans
         ans.msg：消息
             1. success: 成功
             2. method error: 请求类型错误
+            3. type error: 没有传入筛选类型
         
         ans.question_list: 问题列表
 
@@ -104,32 +109,56 @@ def question_list_view(request):
         question.answerer_id: 回复者id
         question.question_time: 回复者id
     """
+    ret_dict = {}
     if request.method == "GET":
-        question_list = []
-        type = request.GET.get("type")
-        if(type == "type"):
-            question_type = request.GET.get("question_type")
-            question_list = models.Question.objects.filter(type = question_type, state = "unsolved").order_by("-id")
-        elif(type == "student"):
-            questioner_id = request.GET.get("id")
-            question_list = models.Question.objects.filter(questioner_id = questioner_id).order_by("-id")
-        elif(type == "teacher"):
-            answerer_id = request.GET.get("id")
-            question_list = models.Question.objects.filter(answerer_id = answerer_id).order_by("-id")
-        elif(type == "date"):
+        ret_dict["msg"] = "success"
+        type_list = request.GET.getlist("type_list",[])
+
+        if(len(type_list) == 0):
+            ret_dict["msg"] = "type error"
+
+        all_condition = Q()
+
+        if("student" in type_list):
+            query_student = Q()
+            student_id_list = request.GET.getlist("student_id_list",[])
+            query_student.connector = "OR"
+            for student_id in student_id_list:
+                query_student.children.append(("questioner_id", student_id))
+            all_condition.add(query_student, "AND")
+
+        if("teacher" in type_list):
+            query_teacher = Q()
+            teacher_id_list = request.GET.getlist("teacher_id_list",[])
+            query_teacher.connector = "OR"
+            for teacher_id in teacher_id_list:
+                query_teacher.children.append(("answerer_id", teacher_id))
+            all_condition.add(query_teacher, "AND")
+
+        if("question_type" in type_list):
+            query_teacher = Q()
+            question_type_list = request.GET.getlist("question_type_list",[])
+            query_teacher.connector = "OR"
+            for question_type in question_type_list:
+                query_teacher.children.append(("type", question_type))
+            all_condition.add(query_teacher, "AND")
+        
+        question_list = models.Question.objects.filter(all_condition)
+
+        if("date" in type_list):
             start_year, start_month, start_day = util.parse_date(request.GET.get("start_date"))
             end_year, end_month, end_day = util.parse_date(request.GET.get("end_date"))
             start_time = datetime.datetime(year = start_year, month = start_month, day = start_day,
                 hour = 0, minute = 0, second = 0)
             end_time = datetime.datetime(year = end_year, month = end_month, day = end_day,
                 hour = 23, minute = 59, second = 59)
-            question_list = models.Question.objects.filter(question_time__range = (start_time, end_time)).order_by("id")
+            question_list = question_list.filter(question_time__range = (start_time, end_time))
 
-        ret_dict = {}
-        ret_dict["msg"] = "success"
+        if("is_star" in type_list):
+            if(request.GET.get("is_star") == "True"):
+                question_list = question_list.filter(is_star = True).order_by("-id")
         ret_dict["question_list"] = [model_to_dict(question) for question in question_list]
     else:
-        ret_dict = {}
         ret_dict["msg"] = "method error"
 
     ans = json.dumps(ret_dict)
@@ -157,7 +186,7 @@ def update_question_view(request):
 
     if request.method == "GET":
         request_dict = json.loads(request.body)
-        type = request_dict.get("type")
+        _type = request_dict.get("type")
         id = request_dict.get("id")
         question_id = request_dict.get("question_id")
         question = models.Question.objects.filter(id = question_id).first()
@@ -166,11 +195,11 @@ def update_question_view(request):
         ret_dict = {}
         ret_dict["msg"] = "success"
 
-        if type == "teacher":
+        if _type == "teacher":
             question.answerer_id = user
             question.state = "solving"
             question.save()
-        elif type == "student":
+        elif _type == "student":
             question.state = "closed"
             question.save()
         else:
