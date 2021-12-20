@@ -54,7 +54,7 @@ MIDDLEWARE = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-ROOT_URLCONF = 'proj.urls'
+ROOT_URLCONF = 'api.urls'
 
 TEMPLATES = [
     {
@@ -73,7 +73,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'proj.wsgi.application'
+WSGI_APPLICATION = 'api.wsgi.application'
 
 
 # Database
@@ -128,6 +128,7 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     STATIC_URL,
     os.path.join(BASE_DIR, "front/dist/static"),
+    os.path.join(BASE_DIR, "store/static"),
 ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

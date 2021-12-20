@@ -16,22 +16,20 @@ def add_star_view(request):
             2. method error: 请求类型错误
             3. power limit: 无权限加精
     """
-
     if request.method == "GET":
-        request_dict = json.loads(request.body)
-        user_id = request_dict.get("user_id")
-        question_id_list = request_dict.get("question_id_list")
+        user_id = request.GET.get("user_id")
+        question_id_list = request.GET.getlist("question_id_list[]",[])
         user = models.User.objects.filter(id = user_id).first()
 
         ret_dict = {}
         ret_dict["msg"] = "success"
 
-        if(not user.type == "admin"):
+        if(not user.user_type == "administrator"):
             ret_dict["msg"] = "power limit"
 
         question_list = models.Question.objects.filter(id__in = question_id_list)
         for question in question_list:
-            question.is_star = True
+            question.is_star = "True"
             question.save()
     else:
         ret_dict = {}

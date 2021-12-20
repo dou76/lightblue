@@ -1,7 +1,8 @@
 import json
 
 from django.http import HttpResponse
-
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from . import util
 from .. import models
 
@@ -133,6 +134,8 @@ def get_info_view(request):
         ans.name: 姓名
         ans.school: 学校
         ans.class: 班级
+        ans.img_url: 头像地址
+        ans.register_time: 注册日期
     """
     ret_dict = {"msg": "success"}
 
@@ -149,6 +152,8 @@ def get_info_view(request):
             ret_dict["name"] = user.name
             ret_dict["school"] = user.school
             ret_dict["class"] = user._class
+            ret_dict["img_url"] = user.img_url
+            ret_dict["register_time"] =user.register_time.strftime('%Y-%m-%d')
 
     else:
         ret_dict["msg"] = "method error"
@@ -242,6 +247,69 @@ def change_password(request):
             else:
                 user.password = new_password
                 user.save()
+    else:
+        ret_dict["msg"] = "method error"
+
+    ans = json.dumps(ret_dict)
+    return HttpResponse(ans, content_type = "application/json")
+
+# 上传头像
+def upload_icon_view(request):
+    """
+    POST:
+        接受参数：request
+        request.id: 用户id
+        request.img: 图片
+        返回参数: ans
+        ans.msg：消息
+            1. success: 成功
+            2. not found: 查找用户失败
+        ans.img_url: 图片路由
+    """
+
+    ret_dict = {"msg": "success"}
+    if request.method == "POST":
+        request_dict = json.loads(request.body)
+        id = request_dict.get("id")
+
+        user = models.User.objects.filter(id = id)
+        if(not user.exists()):
+            ret_dict["msg"] = "not found"
+        else:
+            user = user.first()
+            img = request.FILES.get("img")
+            default_storage.save("../static/icon/"+img.name, ContentFile(img.read()))
+            ret_dict["url"] = "/static/icon/"+img.name
+            user.img_url = ret_dict["img_url"]
+            user.save()
+    else:
+        ret_dict["msg"] = "method error"
+
+    ans = json.dumps(ret_dict)
+    return HttpResponse(ans, content_type = "application/json")
+
+# 注销用户
+def delete_user_view(request):
+    """
+    GET:
+        接受参数：request
+        request.id: 用户id
+        返回参数: ans
+        ans.msg：消息
+            1. success: 成功
+            2. not found: 查找用户失败
+    """
+
+    ret_dict = {"msg": "success"}
+    if request.method == "GET":
+        id = request.GET.get("id")
+
+        user = models.User.objects.filter(id = id)
+        if(not user.exists()):
+            ret_dict["msg"] = "not found"
+        else:
+            user = user.first()
+            user.delete()
     else:
         ret_dict["msg"] = "method error"
 

@@ -51,7 +51,7 @@ def question_view(request):
         questioner = models.User.objects.filter(id = questioner_id).first()
         new_question = models.Question.objects.create(type = _type, title = title, abstract = abstract,
             state = state)
-        new_question.questioner = questioner
+        new_question.questioner_id = questioner
         new_question.save()
         
         ret_dict = {}
@@ -112,8 +112,7 @@ def question_list_view(request):
     ret_dict = {}
     if request.method == "GET":
         ret_dict["msg"] = "success"
-        type_list = request.GET.getlist("type_list",[])
-
+        type_list = request.GET.getlist("type_list[]",[])
         if(len(type_list) == 0):
             ret_dict["msg"] = "type error"
 
@@ -121,7 +120,7 @@ def question_list_view(request):
 
         if("student" in type_list):
             query_student = Q()
-            student_id_list = request.GET.getlist("student_id_list",[])
+            student_id_list = request.GET.getlist("student_id_list[]",[])
             query_student.connector = "OR"
             for student_id in student_id_list:
                 query_student.children.append(("questioner_id", student_id))
@@ -129,7 +128,7 @@ def question_list_view(request):
 
         if("teacher" in type_list):
             query_teacher = Q()
-            teacher_id_list = request.GET.getlist("teacher_id_list",[])
+            teacher_id_list = request.GET.getlist("teacher_id_list[]",[])
             query_teacher.connector = "OR"
             for teacher_id in teacher_id_list:
                 query_teacher.children.append(("answerer_id", teacher_id))
@@ -137,7 +136,7 @@ def question_list_view(request):
 
         if("question_type" in type_list):
             query_teacher = Q()
-            question_type_list = request.GET.getlist("question_type_list",[])
+            question_type_list = request.GET.getlist("question_type_list[]",[])
             query_teacher.connector = "OR"
             for question_type in question_type_list:
                 query_teacher.children.append(("type", question_type))
@@ -207,6 +206,35 @@ def update_question_view(request):
     
     else:
         ret_dict = {}
+        ret_dict["msg"] = "method error"
+
+    ans = json.dumps(ret_dict)
+    return HttpResponse(ans, content_type = "application/json")
+
+# 删除问题
+def delete_question_view(request):
+    """ 
+        接受参数：request
+        request.question_id_list: 问题id列表
+        返回参数: ans
+        ans.msg：消息
+            1. success: 成功
+            2. method error: 请求类型错误
+            3. not found: 查找问题失败
+    """
+    ret_dict = {}
+    if request.method == "GET":
+        ret_dict["msg"] = "success"
+        question_id_list = request.GET.getlist("question_id_list[]",[])
+        for question_id in question_id_list:
+            question = models.Question.objects.filter(id = question_id)
+            if(not question.exists()):
+                ret_dict["msg"] = "not found"
+                break
+            else:
+                question = question.first()
+                question.delete()
+    else:
         ret_dict["msg"] = "method error"
 
     ans = json.dumps(ret_dict)

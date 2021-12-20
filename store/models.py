@@ -6,8 +6,9 @@ class User(models.Model):
     username = models.CharField("用户名", max_length = 14, default = "")
     password = models.CharField("密码", max_length = 25, default = "")
     school = models.CharField("学校", max_length=13, default="")
+    img_url = models.CharField("图片地址", max_length=100, default = "")
     _class = models.CharField("班级", max_length=12, default="")
-    # register_time = models.DateField("注册时间", auto_now_add = True)
+    register_time = models.DateField("注册时间", auto_now_add = True)
 
 
 class Authentication(models.Model):
@@ -28,7 +29,11 @@ class Question(models.Model):
 class Reply(models.Model):
     type = models.CharField("回复类型", max_length = 10, default = "")
     content = models.CharField("回复内容", max_length = 20, default = "")
-    imgage = models.ImageField("回复图片", default = "")
     poster_id = models.ForeignKey("User", db_column='poster_id', on_delete = models.SET_DEFAULT, default = 1)
-    question_id = models.ForeignKey("Question", db_column='question_id', on_delete = models.SET_DEFAULT, default = 1)
+    question_id = models.ForeignKey("Question", db_column='question_id', on_delete = models.CASCADE, default = 1)
     reply_time = models.DateTimeField("回复时间",auto_now_add = True)
+
+class Picture_Relation(models.Model):
+    url = models.ImageField("图片地址", default = "")
+    reply_id = models.ForeignKey("Reply", db_column="reply_id",
+        related_name = "reply_id", on_delete = models.CASCADE, default = 1)
