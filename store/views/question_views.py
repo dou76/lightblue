@@ -67,7 +67,13 @@ def question_view(request):
 
         ret_dict = {}
         ret_dict["msg"] = "success"
-        ret_dict["reply_list"] = [model_to_dict(reply) for reply in reply_list]
+        reply_dict_list = []
+        for reply in reply_list:
+            reply_dict = model_to_dict(reply)
+            reply_dict["reply_time"] = reply.reply_time.strftime('%Y-%m-%d %H:%M')
+            reply_dict_list.append(reply_dict)
+            
+        ret_dict["reply_list"] = reply_dict_list
         ans = json.dumps(ret_dict)
         return HttpResponse(ans, content_type = "application/json")
 
@@ -156,7 +162,14 @@ def question_list_view(request):
         if("is_star" in type_list):
             if(request.GET.get("is_star") == "True"):
                 question_list = question_list.filter(is_star = True).order_by("-id")
-        ret_dict["question_list"] = [model_to_dict(question) for question in question_list]
+
+        question_dict_list = []
+        for question in question_list:
+            question_dict = model_to_dict(question)
+            question_dict["question_time"] = question.question_time.strftime('%Y-%m-%d')
+            question_dict_list.append(question_dict)
+            
+        ret_dict["question_list"] = question_dict_list
     else:
         ret_dict["msg"] = "method error"
 

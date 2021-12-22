@@ -28,16 +28,14 @@ def reply_view(request):
         poster = models.User.objects.filter(id = poster_id).first()
         question_id = request_dict.get("question_id")
         question = models.Question.objects.filter(id = question_id).first()
-
         if(_type == "text"):
             content = request_dict.get("content")
-            new_reply = models.Reply.objects.create(type = _type, content = content)
+            new_reply = models.Reply.objects.create(type = _type, content = content, question_id = question)
         else:
             image = request_dict.get("image")
-            new_reply = models.Reply.objects.create(type = _type, image = image)
+            new_reply = models.Reply.objects.create(type = _type, image = image, question_id = question)
 
         new_reply.poster_id = poster
-        new_reply.question_id = question
         new_reply.save()
 
         ret_dict = {}

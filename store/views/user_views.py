@@ -303,7 +303,7 @@ def delete_user_view(request):
     ret_dict = {"msg": "success"}
     if request.method == "GET":
         id = request.GET.get("id")
-
+        print("!!")
         user = models.User.objects.filter(id = id)
         if(not user.exists()):
             ret_dict["msg"] = "not found"
