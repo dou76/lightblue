@@ -1,15 +1,20 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.signals import user_logged_in
+from datetime import datetime
 
-class User(models.Model):
+class User(AbstractUser):
     name = models.CharField("姓名", max_length = 20, default = "")
     user_type = models.CharField("用户类型", max_length = 12, default="")
-    username = models.CharField("用户名", max_length = 14, default = "")
-    password = models.CharField("密码", max_length = 25, default = "")
     school = models.CharField("学校", max_length=15, default="")
     img_url = models.CharField("头像地址", max_length=100, default = "")
     _class = models.CharField("班级", max_length=10, default="")
     register_time = models.DateField("注册时间", auto_now_add = True)
+    force_logout_date = models.DateTimeField(null = True, blank = True)
 
+    def force_logout(self):
+        self.force_logout_date = datetime.now()
+        self.save()
 
 class Authentication(models.Model):
     authentication = models.CharField("校验码",max_length = 50, default="")
@@ -37,3 +42,9 @@ class Picture_Relation(models.Model):
     url = models.ImageField("图片地址", default = "")
     reply_id = models.ForeignKey("Reply", db_column="reply_id",
         related_name = "reply_id", on_delete = models.CASCADE, default = 1)
+
+def update_session_last_login(sender, user, request, **kwargs):
+    if request:
+        request.session['LAST_LOGIN_DATE'] = datetime.now()
+
+user_logged_in.connect(update_session_last_login)

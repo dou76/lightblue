@@ -2,6 +2,8 @@ import json
 from ..checkers.model_check import check_code
 from ..checkers.model_check import check_multiple_username
 from ..checkers.model_check import login_check
+
+from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -90,7 +92,7 @@ def register_view(request):
         else:
             ret_dict["msg"] = util.check_user_info(request_dict)
             if(ret_dict["msg"] == "success"):
-                new_user = models.User.objects.create(username = username, password = password, name = name,
+                new_user = models.User.objects.create_user(username = username, password = password, name = name,
                     school = school, _class = _class, user_type = _type)
                 new_user.save()
                 ret_dict["id"] = new_user.id
@@ -109,19 +111,33 @@ def login_view(request):
         返回参数: ans
         ans.msg：消息
             1. method error: 表单提交类型错误;
-            2. not found: 用户名错误;
-            3. error: 密码错误;
-            4. success: 成功
+            2. error: 用户名或密码错误;
+            3. already login: 用户已经在其他地点登录
+            4. login fail: 登录失败
+            5. success: 成功;
         ans.id: 用户id(数据库中主键)
         ans.type: 用户类型(student, teacher, admin)
     """
+    ret_dict = {"msg": "success"}
+
     if request.method == "POST":
         request_dict = json.loads(request.body)
         username = request_dict.get("username")
         password = request_dict.get("password")
-        ans = login_check(username, password)
+        user = authenticate(username = username, password = password)
+        if user is None:
+            ret_dict["msg"] = "error"
+        elif user.is_active:
+            user.force_logout()
+            login(request, user)
+            request.session["username"] = username
+            ret_dict["id"] = user.id
+            ret_dict["type"] = user.user_type
+        else:
+            ret_dict["msg"] = "login fail"
     else:
-        ans = json.dumps({"msg": "method error"})
+        ret_dict["msg"] = "method error"
+    ans = json.dumps(ret_dict)
     return HttpResponse(ans, content_type = "application/json")
 
 # 获取信息 
@@ -247,7 +263,7 @@ def change_password_view(request):
             elif(not util.check_password(new_password)):
                 ret_dict['msg'] = "illegal password"
             else:
-                user.password = new_password
+                user.set_password(new_password)
                 user.save()
     else:
         ret_dict["msg"] = "method error"

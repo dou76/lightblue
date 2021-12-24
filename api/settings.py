@@ -50,7 +50,17 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'store.middleware.ForceLogoutMiddleware',
+    'store.middleware.LoginIntercept',
 ]
+
+SESSION_COOKIE_AGE = 60 * 60 * 3
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
+
+AUTH_USER_MODEL = "store.User"
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -117,7 +127,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
