@@ -117,7 +117,7 @@ def question_list_view(request):
         question.abstract: 问题摘要          
         question.questioner_id: 提问者id
         question.answerer_id: 回复者id
-        question.question_time: 回复者id
+        question.question_time: 提问时间
     """
     ret_dict = {}
     if request.method == "GET":
@@ -189,13 +189,12 @@ def update_question_view(request):
             2. teacher
         request.id: 对应对象的id
         request.question_id: 问题的id
+        
         返回参数: ans
         ans.msg：消息
             1. success: 成功
             2. method error: 请求类型错误
             3. type error
-
-        ans.question_list: 问题列表
 
         学生会结单；教师会将问题改为解答中
     """

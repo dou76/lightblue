@@ -7,14 +7,15 @@ def check_password(password):
     if (password == None or not isinstance(password, str) or len(password) > 18 or len(password) < 6):
         return False
 
-    lower, digit = False, False
+    lower, digit, legal = False, False, True
     for letter in password:
         if letter.islower():
             lower = True
         elif letter.isdigit():
             digit = True
-        
-        if(lower and digit):
+        else:
+            legal = False
+        if(lower and digit and legal):
             return True
     
     return False
@@ -28,7 +29,7 @@ def check_user_info(request_dict):
         
     if(not check_legal_username(username)):
         return "illegal username"
-    if(name == None or not isinstance(name, str) or len(name) > 20):
+    if(name == None or not isinstance(name, str) or len(name) > 20 or len(name) < 2):
         return "illegal name"
     if(school == None or not isinstance(school, str) or len(school) > 15):
         return "illegal school"
@@ -58,6 +59,7 @@ def check_content(content):
         return "illegal content"
     else:
         return "success"
+
 # 解析日期
 def parse_date(date):
     date_list = date.split("-")

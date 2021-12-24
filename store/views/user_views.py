@@ -32,7 +32,7 @@ def register_pre_check_view(request):
 
         if(not util.check_legal_username(username)):
             ret_dict["msg"] = "illegal user"
-        elif(not util.check_multiple_username(username)):
+        elif(not check_multiple_username(username)):
             ret_dict["msg"] = "multiple user"
         elif(not util.check_password(password)):
             ret_dict["msg"] = "password error"
@@ -89,7 +89,7 @@ def register_view(request):
             ret_dict["msg"] = "password error"
         else:
             ret_dict["msg"] = util.check_user_info(request_dict)
-            if(request_dict["msg"] == "success"):
+            if(ret_dict["msg"] == "success"):
                 new_user = models.User.objects.create(username = username, password = password, name = name,
                     school = school, _class = _class, user_type = _type)
                 new_user.save()
@@ -214,7 +214,7 @@ def modify_info_view(request):
     return HttpResponse(ans, content_type = "application/json")
 
 # 修改密码
-def change_password(request):
+def change_password_view(request):
     """
         接受参数：request
         request.id: 用户id
