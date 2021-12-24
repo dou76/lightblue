@@ -1,9 +1,11 @@
 import json
-
+from ..checkers.model_check import check_code
+from ..checkers.model_check import check_multiple_username
+from ..checkers.model_check import login_check
 from django.http import HttpResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from . import util
+from ..checkers import util
 from .. import models
 
 # 检查用户名和密码
@@ -56,10 +58,13 @@ def register_view(request):
         ans.msg：消息
             1. method error: 表单提交类型错误
             2. code error: 校验码错误
-            3. illegal user: 非法用户名
             3. multiple user: 用户名重复
-            4. password error: 密码不符合规范
-            5. success: 成功
+            4. illegal user: 非法用户名
+            5. password error: 密码不符合规范
+            6. illegal name: 姓名不合规范;
+            7. illegal school: 学校名不合规范;
+            8. illegal class: 班级名不合规范;
+            9. success: 成功
 
         ans.id: 用户id(数据库中主键)
     """
@@ -76,19 +81,19 @@ def register_view(request):
         _class = request_dict.get("class")
         _type = request_dict.get("type")
 
-        if(not util.check_code(code)):
+        if(not check_code(code)):
             ret_dict["msg"] = "code error"
-        elif(not util.check_legal_username(username)):
-            ret_dict["msg"] = "illegal user"
-        elif(not util.check_multiple_username(username)):
+        elif(not check_multiple_username(username)):
             ret_dict["msg"] = "multiple user"
         elif(not util.check_password(password)):
             ret_dict["msg"] = "password error"
         else:
-            new_user = models.User.objects.create(username = username, password = password, name = name,
-                school = school, _class = _class, user_type = _type)
-            new_user.save()
-            ret_dict["id"] = new_user.id
+            ret_dict["msg"] = util.check_user_info(request_dict)
+            if(request_dict["msg"] == "success"):
+                new_user = models.User.objects.create(username = username, password = password, name = name,
+                    school = school, _class = _class, user_type = _type)
+                new_user.save()
+                ret_dict["id"] = new_user.id
     else:
         ret_dict["msg"] = "method error"
     ans = json.dumps(ret_dict)
@@ -114,7 +119,7 @@ def login_view(request):
         request_dict = json.loads(request.body)
         username = request_dict.get("username")
         password = request_dict.get("password")
-        ans = util.login_check(username, password)
+        ans = login_check(username, password)
     else:
         ans = json.dumps({"msg": "method error"})
     return HttpResponse(ans, content_type = "application/json")
@@ -176,38 +181,35 @@ def modify_info_view(request):
             1. method error: 表单提交类型错误;
             2. not found: 查找用户失败
             3. multiple user: 用户名重复;
-            3. illegal user: 非法用户名;
+            4. illegal user: 非法用户名;
             5. password error: 密码不合规范;
-            6. success: 成功
+            6. illegal name: 姓名不合规范;
+            7. illegal school: 学校名不合规范;
+            8. illegal class: 班级名不合规范;
+            9. success: 成功
     """
     ret_dict = {"msg": "success"}
 
     if request.method == "POST":
         request_dict = json.loads(request.body)
         id = request_dict.get("id")
-        username = request_dict.get("username")
-        name = request_dict.get("name")
-        school = request_dict.get("school")
-        _class = request_dict.get("class")
-
         user = models.User.objects.filter(id = id)
+
         if(not user.exists()):
             ret_dict["msg"] = "not found"
         else:
             user = user.first()
-            if(not util.check_multiple_username(username) and not user.id == id):
-                ret_dict['msg'] = "multiple user"
-            elif(not util.check_legal_username(username)):
-                ret_dict['msg'] = "illegal user"
-            else:
-                user.username = username
-                user.name = name
-                user.school = school
-                user._class = _class
+            ret_dict["msg"] = util.check_user_info(request_dict)
+            if(ret_dict["msg"] == "success"):
+                user.username = request_dict.get("username")
+                user.name = request_dict.get("name")
+                user.school = request_dict.get("school")
+                user._class = request_dict.get("class")
                 user.save()
+        
     else:
         ret_dict["msg"] = "method error"
-
+    print(ret_dict)
     ans = json.dumps(ret_dict)
     return HttpResponse(ans, content_type = "application/json")
 
@@ -303,7 +305,6 @@ def delete_user_view(request):
     ret_dict = {"msg": "success"}
     if request.method == "GET":
         id = request.GET.get("id")
-        print("!!")
         user = models.User.objects.filter(id = id)
         if(not user.exists()):
             ret_dict["msg"] = "not found"

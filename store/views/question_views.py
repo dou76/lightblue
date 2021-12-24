@@ -4,7 +4,7 @@ import datetime
 from django.http import HttpResponse
 from django.forms.models import model_to_dict
 from django.db.models import Q
-from . import util
+from ..checkers import util
 from .. import models
 
 # 创建问题(post) / 获取问题信息(get)
@@ -19,6 +19,9 @@ def question_view(request):
         返回参数: ans
         ans.msg：消息
             1. success: 成功
+            2. illegal type: 类型不合规范
+            3. illegal title: 标题不合规范
+            4. illegal abstract: 摘要不合规范
 
         ans.id: 问题id(数据库中主键)
         
@@ -42,21 +45,22 @@ def question_view(request):
 
     if request.method == "POST":
         request_dict = json.loads(request.body)
-        _type = request_dict.get("type")
-        title = request_dict.get("title")
-        abstract = request_dict.get("abstract")
-        state = "待解决"
-
-        questioner_id = request_dict.get("questioner_id")
-        questioner = models.User.objects.filter(id = questioner_id).first()
-        new_question = models.Question.objects.create(type = _type, title = title, abstract = abstract,
-            state = state)
-        new_question.questioner_id = questioner
-        new_question.save()
-        
         ret_dict = {}
-        ret_dict["msg"] = "success"
-        ret_dict["id"] = new_question.id
+        ret_dict["msg"] = util.check_question_info(request_dict)
+
+        if(ret_dict["msg"] == "success"):
+            _type = request_dict.get("type")
+            title = request_dict.get("title")
+            abstract = request_dict.get("abstract")
+            state = "待解决"
+
+            questioner_id = request_dict.get("questioner_id")
+            questioner = models.User.objects.filter(id = questioner_id).first()
+            new_question = models.Question.objects.create(type = _type, title = title, abstract = abstract,
+                state = state)
+            new_question.questioner_id = questioner
+            new_question.save()
+            ret_dict["id"] = new_question.id
 
         ans = json.dumps(ret_dict)
         return HttpResponse(ans, content_type = "application/json")
@@ -197,10 +201,9 @@ def update_question_view(request):
     """
 
     if request.method == "GET":
-        request_dict = json.loads(request.body)
-        _type = request_dict.get("type")
-        id = request_dict.get("id")
-        question_id = request_dict.get("question_id")
+        _type = request.GET.get("type")
+        id = request.GET.get("id")
+        question_id = request.GET.get("question_id")
         question = models.Question.objects.filter(id = question_id).first()
         user = models.User.objects.filter(id = id).first()
 
@@ -209,10 +212,10 @@ def update_question_view(request):
 
         if _type == "teacher":
             question.answerer_id = user
-            question.state = "solving"
+            question.state = "解决中"
             question.save()
         elif _type == "student":
-            question.state = "closed"
+            question.state = "已解决"
             question.save()
         else:
             ret_dict["msg"] = "type error"
