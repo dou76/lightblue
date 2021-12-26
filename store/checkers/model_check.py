@@ -10,11 +10,9 @@ def check_multiple_username(username):
 
 # 检查校验码
 def check_code(code):
-    # if(models.Authentication.objects.filter(authentication = code).exists()):
-    #     return True
-    # return False
-
-    return True
+    if(models.Authentication.objects.filter(authentication = code).exists()):
+        return True
+    return False
 
 # 用户登录检验
 def login_check(username, password):

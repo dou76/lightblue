@@ -20,7 +20,7 @@ class LoginIntercept(MiddlewareMixin):
 
 class ForceLogoutMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        if not re.search("/store", request.path) is None:
+        if re.search("/store", request.path) is None:
             pass
         elif request.user.is_authenticated and request.user.force_logout_date and \
            request.session['LAST_LOGIN_DATE'] < request.user.force_logout_date.replace(tzinfo = None):
