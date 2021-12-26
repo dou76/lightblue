@@ -3,7 +3,7 @@ from ..checkers.model_check import check_code
 from ..checkers.model_check import check_multiple_username
 from ..checkers.model_check import login_check
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -140,6 +140,19 @@ def login_view(request):
     ans = json.dumps(ret_dict)
     return HttpResponse(ans, content_type = "application/json")
 
+# 用户登出
+def logout_view(request):
+    """
+        接受参数：request
+
+        返回参数: ans
+        ans.msg：消息
+            1. success: 成功;
+    """
+    ret_dict = {"msg": "success"}
+    logout(request)
+    return HttpResponse(json.dumps(ret_dict), content_type = "application/json")
+    
 # 获取信息 
 def get_info_view(request):
     """

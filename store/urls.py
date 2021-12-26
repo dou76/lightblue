@@ -23,7 +23,7 @@ urlpatterns = [
     path("register_pre_check/", user_views.register_pre_check_view),
     path("register/", user_views.register_view),
     path("login/", user_views.login_view),
-    path("logout/", logout),
+    path("logout/", user_views.logout_view),
     path("get_info/", user_views.get_info_view),
     path("modify_info/", user_views.modify_info_view),
     path("change_password/", user_views.change_password_view),

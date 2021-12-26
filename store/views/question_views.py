@@ -40,7 +40,9 @@ def question_view(request):
         reply.content: 回复内容
         reply.image: 回复图片           ##尚未实现##
         reply.poster_id: 回复者的id
-        reply.reply_time: 回复时间
+        reply.poster_name: 回复者姓名
+        reply.poster_school: 回复者学校
+        reply.poster_type: 回复者类型
     """
 
     if request.method == "POST":
@@ -75,6 +77,10 @@ def question_view(request):
         for reply in reply_list:
             reply_dict = model_to_dict(reply)
             reply_dict["reply_time"] = reply.reply_time.strftime('%Y-%m-%d %H:%M')
+            user = models.User.objects.filter(id = reply_dict["poster_id"]).first()
+            reply_dict["poster_name"] = user.name
+            reply_dict["poster_school"] = user.school
+            reply_dict["poster_type"] = user.user_type
             reply_dict_list.append(reply_dict)
             
         ret_dict["reply_list"] = reply_dict_list
